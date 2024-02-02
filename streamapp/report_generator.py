@@ -18,25 +18,7 @@ class ReportGenerator:
     totals_style.border = Border(top=Side(border_style='thick', color='FF000000'),bottom=Side(border_style=None, color='FF000000'))
     col = get_column_letter
 
-    @classmethod
-    @cache_data(ttl=timedelta(minutes=30))
-    def generate_from_template(_cls, file_name:str, dfs:dict, sub_folder:str = '', base_file:str ='_', xslx_style:str = 'TableStyleMedium3'):
-        """
-        Return an .xlsx file
-        dfs is a dict of names and Dataframes per sheets ex: {'Hoja 1': Dataframe1, 'ingresos': ingresos_dataframe}
-        kargs: variables to define a summary
-
-        """
-        try:
-            workbook = load_workbook(Path(secrets.utils_file, sub_folder, base_file +'.xlsx').as_posix())
-        except:
-            workbook = Workbook()
-            for n, i in enumerate(dfs.keys()):
-                if n == 0:
-                    workbook.active.title = i
-                else:
-                    workbook.create_sheet(title=i)
-
+    def __reports(workbook, dfs:dict, file_name:str, base_file:str ='_', xslx_style:str = 'TableStyleMedium3'):
         for name, df in dfs.items():
             # seguro de fecha para generar excel    
             for i in df.columns: 
@@ -46,9 +28,9 @@ class ReportGenerator:
             worksheet = workbook[name]
                 
             for i in range(1,max_col+1):
-                worksheet.column_dimensions[_cls.col(i)].width = 23
+                worksheet.column_dimensions[get_column_letter(i)].width = 23
             
-            tab = Table(displayName=name, ref=f"A1:{_cls.col(max_col)}{max_row+1}")
+            tab = Table(displayName=name, ref=f"A1:{get_column_letter(max_col)}{max_row+1}")
             tab.tableStyleInfo = TableStyleInfo(name=xslx_style)
             worksheet._tables.add(tab)
             
@@ -63,6 +45,43 @@ class ReportGenerator:
         workbook.close()
 
         return [file_name+'.xlsx', file]
+
+    @classmethod
+    @cache_data(ttl=timedelta(minutes=30))
+    def generate_from_template(_cls, file_name:str, dfs:dict, sub_folder:str = '', base_file:str ='_'):
+        """
+        Return an .xlsx file
+        dfs is a dict of names and Dataframes per sheets ex: {'Hoja 1': Dataframe1, 'ingresos': ingresos_dataframe}
+        kargs: variables to define a summary
+
+        """
+        try:
+            workbook = load_workbook(Path(secrets.utils_files, sub_folder, base_file +'.xlsx').as_posix())
+            result = _cls.__reports(workbook=workbook,  dfs=dfs, file_name=file_name, base_file=base_file)
+        except:
+            
+            result = _cls.__reports(workbook=workbook,  dfs=dfs, file_name=file_name)
+
+        return result
+    
+    @classmethod
+    @cache_data(ttl=timedelta(minutes=30))
+    def generate(_cls, dfs:dict, file_name:str):
+        """
+        Return an .xlsx file
+        dfs is a dict of names and Dataframes per sheets ex: {'Hoja 1': Dataframe1, 'ingresos': ingresos_dataframe}
+        kargs: variables to define a summary
+
+        """
+        workbook = Workbook()
+        for n, i in enumerate(dfs.keys()):
+            if n == 0:
+                workbook.active.title = i
+            else:
+                workbook.create_sheet(title=i)
+        result = _cls.__reports(workbook=workbook, dfs=dfs, file_name=file_name)
+
+        return result
  
 
 class InMemoryZip(object):

@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 from snowflake import connector
+from cryptography.fernet import Fernet
 from jinja2 import Environment, FileSystemLoader, BaseLoader
 from pandas import read_sql_query, DataFrame
 from streamlit.connections import BaseConnection
@@ -11,8 +12,24 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 class SnowConnection(BaseConnection[connector.connect]):
     def _connect(self) -> connector.connect:
-        connection = connector.connect(dict(secrets.SNOW_SERVER))
-        return self.connection_authorize(connection)
+        connection = connector.connect(
+            **self.__check_tocken(
+                dict(secrets.SNOW_SERVER)
+            )
+        )
+        return connection
+    
+    def __check_tocken(self, credentials: dict):
+        try:
+            if secrets.get('key') and not credentials.get('authenticator') == 'externalbrowser':
+                token = Fernet(secrets.key.encode()).decrypt(secrets.SNOW_SERVER.password.encode()).decode()
+                credentials.pop('password')
+                credentials.update(password=token)
+        except:
+            credentials.pop('user')
+            credentials.update(user=session_state.name)
+        return credentials 
+
     
     @classmethod
     def render(cls, query, params, direct:bool = True, sub_folder:str = ''):

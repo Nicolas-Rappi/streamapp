@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import page_selector
+from .utils import page_selector
 
 class CountrySelector:
     countries = {

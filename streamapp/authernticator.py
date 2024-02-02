@@ -1,7 +1,7 @@
 from streamlit_authenticator  import Authenticate
 import streamlit as st
-from snow_class import SnowConnection
-from country_selector import CountrySelector
+from .snow_class import SnowConnection
+from .country_selector import CountrySelector
 
 class Roles:
     no_acces = '## Sorry you don\'t have access to this page ⛔ \n contact your admin for more info **@nicolas.morales**'
@@ -56,14 +56,14 @@ class Login:
             except KeyError:
                 st.session_state.authentication_status = None
                 st.warning('Try again something was wrong'), st.stop()
-                print('Error in login with name key')
+
         try:
             # if authentication is successfull
             if st.session_state.authentication_status:
                 cls.logout()
                 Roles.allow_acces(roles)
-                if st.session_state.get('conn') == None:
-                    st.session_state.conn = st.connection('snow', type=SnowConnection)
+                # if st.session_state.get('conn') == None:
+                #     st.session_state.conn = st.connection('snow', type=SnowConnection)
             # if authentication fail
             elif st.session_state.authentication_status == False:
                 st.session_state.authentication_status = None
